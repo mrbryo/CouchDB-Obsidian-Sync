@@ -2,7 +2,7 @@
 set -e
 
 # Start CouchDB in the background
-couchdb &
+/opt/couchdb/bin/couchdb &
 COUCHDB_PID=$!
 
 # if local.ini doesn't exist then copy it over to /opt/couchdb/etc/
@@ -26,7 +26,7 @@ kill $COUCHDB_PID
 wait $COUCHDB_PID || true
 
 # Start CouchDB again
-couchdb &
+/opt/couchdb/bin/couchdb &
 COUCHDB_PID=$!
 
 # Wait for CouchDB to be ready
@@ -59,7 +59,7 @@ if [ ! -f /opt/couchdb/etc/local.d/a_local.ini ] && [ ${COUCHDB_PERUSER} -eq "tr
   wait $COUCHDB_PID || true
 
   # Start CouchDB again
-  couchdb &
+  /opt/couchdb/bin/couchdb &
   COUCHDB_PID=$!
 
   # Wait for CouchDB to be ready
