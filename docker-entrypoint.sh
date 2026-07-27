@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+# Ensure the local.d directory exists
+mkdir -p /opt/couchdb/etc/local.d
+chmod 755 /opt/couchdb/etc/local.d
+
 cd /opt/couchdb
 
 # Run the official CouchDB entrypoint in the background
