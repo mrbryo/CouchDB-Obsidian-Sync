@@ -12,24 +12,57 @@ fi
 echo "Starting CouchDB for initialization..."
 /opt/couchdb/bin/couchdb &
 COUCHDB_PID=$!
+if [ -z "$COUCHDB_PID" ]; then
+  echo "Failed to capture CouchDB process ID"
+  exit 1
+fi
 
 # Wait for CouchDB to be ready
 echo "Waiting for CouchDB to start..."
+wait_counter=0
 until curl -s http://localhost:5984/ > /dev/null; do
+  wait_counter=$((wait_counter + 1))
+  if [ $((wait_counter % 150)) -eq 0 ]; then
+    echo "(Initial) Still waiting for CouchDB to start..."
+    if [ $wait_counter -ge 450 ]; then
+      echo "CouchDB startup timeout (15 minutes exceeded)"
+      exit 1
+    fi
+  fi
   sleep 2
 done
 
 # Because single_node is set to true in the CouchDB ini file, we need to restart once to complete setup
 echo "Restarting CouchDB to complete single-node setup..."
-kill $COUCHDB_PID
-wait $COUCHDB_PID || true
+kill "$COUCHDB_PID"
+for i in {1..15}; do
+  if ! kill -0 "$COUCHDB_PID" 2>/dev/null; then
+    break
+  fi
+  sleep 1
+done
+# Force kill if still running
+kill -9 "$COUCHDB_PID" 2>/dev/null || true
 
 # Start CouchDB again
 /opt/couchdb/bin/couchdb &
 COUCHDB_PID=$!
+if [ -z "$COUCHDB_PID" ]; then
+  echo "Failed to restart CouchDB"
+  exit 1
+fi
 
 # Wait for CouchDB to be ready again
+wait_counter=0
 until curl -s http://localhost:5984/ > /dev/null; do
+  wait_counter=$((wait_counter + 1))
+  if [ $((wait_counter % 150)) -eq 0 ]; then
+    echo "(Restart 1) Still waiting for CouchDB to start..."
+    if [ $wait_counter -ge 450 ]; then
+      echo "CouchDB restart timeout (15 minutes exceeded)"
+      exit 1
+    fi
+  fi
   sleep 2
 done
 
@@ -50,19 +83,42 @@ done
 # Add couch_peruser configuration if enabled
 if [ -f /config/peruser.ini ] && [ ! -f /opt/couchdb/etc/local.d/a_local.ini ]; then
   if [ "${COUCHDB_PERUSER:-false}" = "true" ]; then
+    if [ ! -d /opt/couchdb/etc/local.d ]; then
+      mkdir -p /opt/couchdb/etc/local.d
+    fi
     cp /config/peruser.ini /opt/couchdb/etc/local.d/a_local.ini
 
     # Restart CouchDB to apply configuration changes
     echo "Restarting CouchDB to apply 'DB per User' configuration..."
-    kill $COUCHDB_PID
-    wait $COUCHDB_PID || true
+    kill "$COUCHDB_PID"
+    for i in {1..15}; do
+      if ! kill -0 "$COUCHDB_PID" 2>/dev/null; then
+        break
+      fi
+      sleep 1
+    done
+    # Force kill if still running
+    kill -9 "$COUCHDB_PID" 2>/dev/null || true
 
     # Start CouchDB again
     /opt/couchdb/bin/couchdb &
     COUCHDB_PID=$!
+    if [ -z "$COUCHDB_PID" ]; then
+      echo "Failed to restart CouchDB for peruser config"
+      exit 1
+    fi
 
     # Wait for CouchDB to be ready
+    wait_counter=0
     until curl -s http://localhost:5984/ > /dev/null; do
+      wait_counter=$((wait_counter + 1))
+      if [ $((wait_counter % 150)) -eq 0 ]; then
+        echo "(Restart 2) Still waiting for CouchDB to start..."
+        if [ $wait_counter -ge 450 ]; then
+          echo "CouchDB peruser config timeout (15 minutes exceeded)"
+          exit 1
+        fi
+      fi
       sleep 2
     done
   fi
@@ -71,4 +127,4 @@ fi
 echo "CouchDB is ready!"
 
 # Keep CouchDB running in the foreground
-wait $COUCHDB_PID
+wait "$COUCHDB_PID"
