@@ -1,13 +1,13 @@
 services:
   couchdb:
     build: .
-    container_name: obsidian-sync
+    container_name: couchdb-obsidian-sync
     environment:
       - COUCHDB_USER=${COUCHDB_USER:-admin_user}
       - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin_password}
     volumes:
       - ./data:/opt/couchdb/data
-      - ./config/local.ini:/opt/couchdb/etc/local.ini
+      # - ./config/local.ini:/opt/couchdb/etc/local.ini
     ports:
       - "5984:5984"
     restart: unless-stopped
