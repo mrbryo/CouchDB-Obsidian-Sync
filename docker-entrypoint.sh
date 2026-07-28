@@ -36,12 +36,15 @@ fi
 
 # check for missing vm.args file to resolve issue: Failed to open arguments file "/opt/couchdb/bin/../etc/vm.args" at "/opt/couchdb": No such file or directory
 if [ ! -f /opt/couchdb/etc/vm.args ] ; then
-  if [ -f /vm.args ] ; then
-    cp /vm.args /opt/couchdb/etc/vm.args
+  # vm.args found in /opt/couchdb/releases
+  if [ -f /opt/couchdb/releases/vm.args ] ; then
+    cp /opt/couchdb/releases/vm.args /opt/couchdb/etc/vm.args
   else
-    echo "vm.args File is Missing!"
+    echo "vm.args file is missing in '/opt/counchdb/releases'."
     # exit $VMARGSMISSING
   fi
+else
+  echo "vm.args was found in '/opt/couchdb/etc'; no need to copy it."
 fi
 
 # change to working directory
