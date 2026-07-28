@@ -54,7 +54,7 @@ cd /opt/couchdb
 
 # Run the official CouchDB entrypoint in the background
 echo "Starting official CouchDB entrypoint..."
-/docker-entrypoint.sh couchdb &
+/docker-entrypoint.sh couchdb < /dev/null &
 COUCHDB_PID=$!
 
 if [ -z "$COUCHDB_PID" ]; then
@@ -97,7 +97,7 @@ if [ -f /config/peruser.ini ] ; then
       done
       kill -9 "$COUCHDB_PID" 2>/dev/null || true
 
-      /docker-entrypoint.sh couchdb &
+      /docker-entrypoint.sh couchdb < /dev/null &
       COUCHDB_PID=$!
       if [ -z "$COUCHDB_PID" ]; then
         echo "Failed to restart CouchDB for peruser config"
