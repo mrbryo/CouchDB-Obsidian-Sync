@@ -40,7 +40,7 @@ if [ ! -f /opt/couchdb/etc/vm.args ] ; then
     cp /vm.args /opt/couchdb/etc/vm.args
   else
     echo "vm.args File is Missing!"
-    exit $VMARGSMISSING
+    # exit $VMARGSMISSING
   fi
 fi
 
