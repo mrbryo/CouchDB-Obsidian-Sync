@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+echo "=========================================="
+echo "CouchDB for Obsidian Sync Entrypoint Script started at: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+echo "=========================================="
+
 # Local Vars
 FAILEDTOSTART=1
 LOCALINIMISSING=2
