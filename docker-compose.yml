@@ -5,9 +5,12 @@ services:
     environment:
       - COUCHDB_USER=${COUCHDB_USER:-admin_user}
       - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin_password}
+      - COUCHDB_PERUSER=${COUCHDB_PERUSER:-false}
+      - COUCHDB_PORT=${COUCHDB_PORT:-5984}
+      - COUCHDB_LOG_LEVEL=${COUCHDB_LOG_LEVEL:-info}
     volumes:
       - ./data:/opt/couchdb/data
       - ./config:/config
     ports:
-      - "5984:5984"
+      - "${COUCHDB_PORT:-5984}:${COUCHDB_PORT:-5984}"
     restart: unless-stopped

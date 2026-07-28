@@ -24,14 +24,16 @@ fi
 # put an empty ini file in local.d to resolve issue from couchdb repo grep error: grep: /opt/couchdb/etc/default.d/*.ini: No such file or directory
 echo "# OK to delete this file after placing your own ini files. This file created to resolve grep error from CouchDB docker-entrypoint.sh error." > /opt/couchdb/etc/default.d/fake.ini
 
-# Copy our local.ini if it doesn't exist into local.d folder.
+# Copy our local.ini into local.d on each restart in case user changes values
 if [ -f /config/local.ini ] ; then
-  if [ ! -f /opt/couchdb/etc/local.d/a_local.ini ]; then
-    cp /config/local.ini /opt/couchdb/etc/local.d/a_local.ini
-  fi
+  cp /config/local.ini /opt/couchdb/etc/local.d/a_local.ini
+
+  # Substitute environment variables
+  sed -i "s|{COUCHDB_LOG_LEVEL}|${COUCHDB_LOG_LEVEL:-info}|g" /opt/couchdb/etc/local.d/a_local.ini
+  sed -i "s|{COUCHDB_USER}|${COUCHDB_USER:-admin}|g" /opt/couchdb/etc/local.d/a_local.ini
+  sed -i "s|{COUCHDB_PASSWORD}|${COUCHDB_PASSWORD:-MustSetPassword!}|g" /opt/couchdb/etc/local.d/a_local.ini
 else
-  echo "Our local.ini file is missing! Exiting script..."
-  exit $LOCALINIMISSING
+  echo "Important Note: /config/local.ini is missing. See the README.md for all the details."
 fi
 
 # check for missing vm.args file to resolve issue: Failed to open arguments file "/opt/couchdb/bin/../etc/vm.args" at "/opt/couchdb": No such file or directory
