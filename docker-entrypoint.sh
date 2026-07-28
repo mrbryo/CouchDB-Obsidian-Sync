@@ -78,6 +78,12 @@ done
 
 echo "CouchDB is running, applying custom configuration..."
 
+# Ensure system databases exist for single-node setup
+echo "Creating system databases..."
+curl -s -X PUT -u ${COUCHDB_USER}:${COUCHDB_PASSWORD} http://localhost:5984/_users > /dev/null 2>&1 || true
+curl -s -X PUT -u ${COUCHDB_USER}:${COUCHDB_PASSWORD} http://localhost:5984/_replicator > /dev/null 2>&1 || true
+sleep 1
+
 # Handle peruser config if enabled
 if [ -f /config/peruser.ini ] ; then
   if [ "${COUCHDB_PERUSER:-false}" = "true" ]; then
