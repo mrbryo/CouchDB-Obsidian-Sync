@@ -1,4 +1,4 @@
-FROM couchdb:latest
+FROM apache/couchdb:latest
 
 COPY docker-entrypoint.sh /docker-entrypoint-supplement.sh
 COPY config/ /config/

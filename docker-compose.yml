@@ -10,7 +10,8 @@ services:
       - COUCHDB_LOG_LEVEL=${COUCHDB_LOG_LEVEL:-info}
       - TZ=America/Los_Angeles
     volumes:
-      - ./data:/opt/couchdb/data
+      - /mnt/user/appdata/ObsidianSync/data:/opt/couchdb/data
+      - /mnt/user/appdata/ObsidianSync/config:/opt/couchdb/etc/local.d
       - ./config:/config
     ports:
       - "${COUCHDB_PORT:-5984}:${COUCHDB_PORT:-5984}"

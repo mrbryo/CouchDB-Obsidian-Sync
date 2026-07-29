@@ -1,9 +1,14 @@
 #!/bin/bash
 set -e
 
-echo "=========================================="
-echo "CouchDB for Obsidian Sync Entrypoint Script started at: $(date '+%Y-%m-%d %H:%M:%S %Z')"
-echo "=========================================="
+# Logging function with timestamp
+log() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S %Z')] $1"
+}
+
+log "=========================================="
+log "CouchDB for Obsidian Sync Entrypoint Script started"
+log "=========================================="
 
 # Local Vars
 FAILEDTOSTART=1
@@ -15,18 +20,23 @@ PERUSERMISSING=4
 if [ ! -d /opt/couchdb/etc/local.d ] ; then
   mkdir -p /opt/couchdb/etc/local.d
   chmod 755 /opt/couchdb/etc/local.d
-  echo "local.d directory created and permissions updated!"
+  log "local.d directory created and permissions updated!"
 fi
 
 # Ensure the default.d directory exists
 if [ ! -d /opt/couchdb/etc/default.d ] ; then
   mkdir -p /opt/couchdb/etc/default.d
   chmod 755 /opt/couchdb/etc/default.d
-  echo "default.d directory created and permissions updated!"
+  log "default.d directory created and permissions updated!"
 fi
 
-# put an empty ini file in local.d to resolve issue from couchdb repo grep error: grep: /opt/couchdb/etc/default.d/*.ini: No such file or directory
-echo "# OK to delete this file after placing your own ini files. This file created to resolve grep error from CouchDB docker-entrypoint.sh error." > /opt/couchdb/etc/default.d/fake.ini
+# put an empty ini file in default.d to resolve issue from couchdb repo grep error, only if directory is empty
+if ! ls /opt/couchdb/etc/default.d/*.ini >/dev/null 2>&1; then
+  echo "# OK to delete this file after placing your own ini files. This file created to resolve grep error from CouchDB docker-entrypoint.sh error." > /opt/couchdb/etc/default.d/fake.ini
+  log "Since '/opt/couchdb/etc/default.d' is empty, created a fake ini file to resolve a grep error in the CouchDB docker-entrypoint.sh."
+else
+  log "Skipping Fake INI File..."
+fi
 
 # Copy our local.ini into local.d on each restart in case user changes values
 if [ -f /config/local.ini ] ; then
@@ -37,7 +47,7 @@ if [ -f /config/local.ini ] ; then
   sed -i "s|{COUCHDB_USER}|${COUCHDB_USER:-admin}|g" /opt/couchdb/etc/local.d/a_local.ini
   sed -i "s|{COUCHDB_PASSWORD}|${COUCHDB_PASSWORD:-MustSetPassword!}|g" /opt/couchdb/etc/local.d/a_local.ini
 else
-  echo "Important Note: /config/local.ini is missing. See the README.md for all the details."
+  log "Important Note: /config/local.ini is missing. See the README.md for all the details."
 fi
 
 # check for missing vm.args file to resolve issue: Failed to open arguments file "/opt/couchdb/bin/../etc/vm.args" at "/opt/couchdb": No such file or directory
@@ -46,50 +56,50 @@ if [ ! -f /opt/couchdb/etc/vm.args ] ; then
   if [ -f /opt/couchdb/releases/vm.args ] ; then
     cp /opt/couchdb/releases/vm.args /opt/couchdb/etc/vm.args
   else
-    echo "vm.args file is missing in '/opt/counchdb/releases'."
+    log "vm.args file is missing in '/opt/couchdb/releases'."
     # exit $VMARGSMISSING
   fi
 else
-  echo "vm.args was found in '/opt/couchdb/etc'; no need to copy it."
+  log "vm.args was found in '/opt/couchdb/etc'; no need to copy it."
 fi
 
 # change to working directory
 cd /opt/couchdb
 
 # Run the official CouchDB entrypoint in the background
-echo "Starting official CouchDB entrypoint..."
+log "Starting official CouchDB entrypoint..."
 /docker-entrypoint.sh couchdb < /dev/null &
 COUCHDB_PID=$!
 
 if [ -z "$COUCHDB_PID" ]; then
-  echo "Failed to start CouchDB"
+  log "Failed to start CouchDB"
   exit $FAILEDTOSTART
 fi
 
 # Wait for CouchDB to be ready
-echo "Waiting for CouchDB to start..."
+log "Waiting for CouchDB to start..."
 wait_counter=0
 until curl -s http://localhost:5984/ > /dev/null; do
   wait_counter=$((wait_counter + 1))
   if [ $wait_counter -ge 450 ]; then
-      echo "CouchDB startup timeout (15 minutes exceeded)"
+      log "CouchDB startup timeout (15 minutes exceeded)"
       exit $FAILEDTOSTART
   elif [ $((wait_counter % 150)) -eq 0 ]; then
-    echo "Still waiting for CouchDB to start..."
+    log "Still waiting for CouchDB to start..."
   fi
   sleep 2
 done
 
-echo "CouchDB is running, applying custom configuration..."
+log "CouchDB is running, applying custom configuration..."
 
 # Ensure system databases exist for single-node setup
-echo "Creating system databases..."
-echo "Attempting to create _users database..."
+log "Creating system databases..."
+log "Attempting to create _users database..."
 curl -v -X PUT -u ${COUCHDB_USER}:${COUCHDB_PASSWORD} http://localhost:5984/_users
-echo ""
-echo "Attempting to create _replicator database..."
+log ""
+log "Attempting to create _replicator database..."
 curl -v -X PUT -u ${COUCHDB_USER}:${COUCHDB_PASSWORD} http://localhost:5984/_replicator
-echo ""
+log ""
 sleep 2
 
 # Handle peruser config if enabled
@@ -101,7 +111,7 @@ if [ -f /config/peruser.ini ] ; then
       fi
       cp /config/peruser.ini /opt/couchdb/etc/local.d/b_local.ini
 
-      echo "Restarting CouchDB to apply peruser configuration..."
+      log "Restarting CouchDB to apply peruser configuration..."
       kill "$COUCHDB_PID"
       for i in {1..15}; do
         if ! kill -0 "$COUCHDB_PID" 2>/dev/null; then
@@ -114,7 +124,7 @@ if [ -f /config/peruser.ini ] ; then
       /docker-entrypoint.sh couchdb < /dev/null &
       COUCHDB_PID=$!
       if [ -z "$COUCHDB_PID" ]; then
-        echo "Failed to restart CouchDB for peruser config"
+        log "Failed to restart CouchDB for peruser config"
         exit $FAILEDTOSTART
       fi
 
@@ -123,27 +133,25 @@ if [ -f /config/peruser.ini ] ; then
       until curl -s http://localhost:5984/ > /dev/null; do
         wait_counter=$((wait_counter + 1))
         if [ $wait_counter -ge 450 ]; then
-            echo "CouchDB startup timeout after peruser (15 minutes exceeded)"
+            log "CouchDB startup timeout after peruser (15 minutes exceeded)"
             exit $FAILEDTOSTART
         elif [ $((wait_counter % 150)) -eq 0 ]; then
-          echo "Still waiting for CouchDB to start after peruser config..."
+          log "Still waiting for CouchDB to start after peruser config..."
         fi
         sleep 2
       done
     else
-      echo "Per User config file already exists in local.d folder; skipping!"
+      log "Per User config file already exists in local.d folder; skipping!"
     fi
   else
-    echo "Per User is not enabled; skipping...however!"
-    echo "Ff this was ever enabled in the past the config file was never removed."
-    echo "Who knows what could go wrong if the config file is removed after the DB went through this setup?"
+    log "Per User is not enabled; skipping! For more details see README.md."
   fi
 else
-  echo "Our Per User config file is missing! Exiting script..."
+  log "Our Per User config file is missing! Exiting script..."
   exit $PERUSERMISSING
 fi
 
-echo "CouchDB is ready!"
+log "CouchDB is ready!"
 
 # Keep CouchDB running in the foreground
 wait "$COUCHDB_PID"
