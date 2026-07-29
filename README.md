@@ -2,11 +2,9 @@
 Create an Unraid compatible Docker image for backing up Obsidian locally.
 
 ## Credit
-I didn't really like any of the existing Unraid Community Applications for Obsidian backup so I started searching for a different solution. I found this site [Self-Host Obsidian Sync in 10 Minutes with Docker](https://www.joshuapack.com/self-host-obsidian-sync-in-10-minutes-with-docker/). And decided to give it a shot. Just using it as a starting point. 
+None of the existing Unraid Community Applications for Obsidian backup really fit what I wanted so I started searching for a different solution. I found this site [Self-Host Obsidian Sync in 10 Minutes with Docker](https://www.joshuapack.com/self-host-obsidian-sync-in-10-minutes-with-docker/). And decided to give it a shot. Just using it as a starting point. Also, helps me learn more about Docker containers.
 
-## Issues
-
-### Configuration Files
+## Configuration Files
 
 The files in the config folder are all the configuration files being used. Each one is copied and renamed so they execute in the proper order. Note from CouchDB about configuration file loading: [CouchDB Guide - Configuration Files](https://docs.couchdb.org/en/stable/config/intro.html#configuration-files)
 
@@ -17,9 +15,13 @@ Special note about the 'peruser.ini'. This configuration is only copied into the
 
 You will see this error message in the logs if for some reason the original /config/local.ini file is missing: Our local.ini file is missing! Open a ticket but you may want to see if the file can be restored from the source.
 
-#### Adding Your Config
+### Adding Your Config
 
 Create your own files but the file name must start with the letter 'c' or higher because the last processed configuration file (based on load rules from CouchDB site) will override any previous file settings.
+
+## Per User DB Config
+
+By default per user DB configuration is enabled in the b_local.ini file. If the b_local.ini file is ever replaced or removed to effectively disable the per user DB feature after initial DB setup I have no idea what will go wrong. Remove at your own risk and do your research.
 
 ## License
 See the LICENSE file.

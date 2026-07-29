@@ -6,6 +6,9 @@ services:
       - COUCHDB_USER=${COUCHDB_USER:-admin}
       - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-password}
     volumes:
+      - /mnt/user/appdata/ObsidianSync/data:/opt/couchdb/data
+      - /mnt/user/appdata/ObsidianSync/config:/opt/couchdb/etc/local.d
+      - ./config:/config
       - /mnt/user/appdata/ObsidianSync/data:/var/lib/couchdb
       - /mnt/user/appdata/ObsidianSync/config:/etc/couchdb/local.d
     ports:
