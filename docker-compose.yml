@@ -1,17 +1,12 @@
 services:
   couchdb:
-    build: .
+    image: apache/couchdb:latest
     container_name: couchdb-obsidian-sync
     environment:
-      - COUCHDB_USER=${COUCHDB_USER:-admin_user}
-      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin_password}
-      - COUCHDB_PERUSER=${COUCHDB_PERUSER:-false}
-      - COUCHDB_PORT=${COUCHDB_PORT:-5984}
-      - COUCHDB_LOG_LEVEL=${COUCHDB_LOG_LEVEL:-info}
-      - TZ=America/Los_Angeles
+      - COUCHDB_USER=${COUCHDB_USER:-admin}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-password}
     volumes:
       - ./data:/opt/couchdb/data
-      - ./config:/config
     ports:
-      - "${COUCHDB_PORT:-5984}:${COUCHDB_PORT:-5984}"
+      - "5984:5984"
     restart: unless-stopped
