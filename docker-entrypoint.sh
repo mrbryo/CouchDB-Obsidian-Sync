@@ -103,17 +103,7 @@ until curl -s -u ${COUCHDB_USER}:${COUCHDB_PASSWORD} http://localhost:5984/_sess
   sleep 2
 done
 
-log "CouchDB is ready, applying custom configuration..."
-
-# Ensure system databases exist for single-node setup
-log "Creating system databases..."
-log "Attempting to create _users database..."
-curl -m 10 -v -X PUT -u ${COUCHDB_USER}:${COUCHDB_PASSWORD} http://localhost:5984/_users || log "Database may already exist (this is normal)"
-log ""
-log "Attempting to create _replicator database..."
-curl -m 10 -v -X PUT -u ${COUCHDB_USER}:${COUCHDB_PASSWORD} http://localhost:5984/_replicator || log "Database may already exist (this is normal)"
-log ""
-sleep 2
+log "CouchDB is ready, system databases auto-created by single_node mode."
 
 # Handle peruser config if enabled
 if [ -f /config/peruser.ini ] ; then
