@@ -90,15 +90,28 @@ until curl -s http://localhost:5984/ > /dev/null; do
   sleep 2
 done
 
-log "CouchDB is running, applying custom configuration..."
+log "CouchDB is running, waiting for authentication to be ready..."
+wait_counter=0
+until curl -s -u ${COUCHDB_USER}:${COUCHDB_PASSWORD} http://localhost:5984/_session > /dev/null 2>&1; do
+  wait_counter=$((wait_counter + 1))
+  if [ $wait_counter -ge 450 ]; then
+      log "CouchDB authentication timeout (15 minutes exceeded)"
+      exit $FAILEDTOSTART
+  elif [ $((wait_counter % 150)) -eq 0 ]; then
+    log "Still waiting for authentication to be ready..."
+  fi
+  sleep 2
+done
+
+log "CouchDB is ready, applying custom configuration..."
 
 # Ensure system databases exist for single-node setup
 log "Creating system databases..."
 log "Attempting to create _users database..."
-curl -v -X PUT -u ${COUCHDB_USER}:${COUCHDB_PASSWORD} http://localhost:5984/_users
+curl -m 10 -v -X PUT -u ${COUCHDB_USER}:${COUCHDB_PASSWORD} http://localhost:5984/_users || log "Database may already exist (this is normal)"
 log ""
 log "Attempting to create _replicator database..."
-curl -v -X PUT -u ${COUCHDB_USER}:${COUCHDB_PASSWORD} http://localhost:5984/_replicator
+curl -m 10 -v -X PUT -u ${COUCHDB_USER}:${COUCHDB_PASSWORD} http://localhost:5984/_replicator || log "Database may already exist (this is normal)"
 log ""
 sleep 2
 
@@ -137,6 +150,19 @@ if [ -f /config/peruser.ini ] ; then
             exit $FAILEDTOSTART
         elif [ $((wait_counter % 150)) -eq 0 ]; then
           log "Still waiting for CouchDB to start after peruser config..."
+        fi
+        sleep 2
+      done
+
+      # Wait for authentication to be ready
+      wait_counter=0
+      until curl -s -u ${COUCHDB_USER}:${COUCHDB_PASSWORD} http://localhost:5984/_session > /dev/null 2>&1; do
+        wait_counter=$((wait_counter + 1))
+        if [ $wait_counter -ge 450 ]; then
+            log "CouchDB authentication timeout after peruser (15 minutes exceeded)"
+            exit $FAILEDTOSTART
+        elif [ $((wait_counter % 150)) -eq 0 ]; then
+          log "Still waiting for authentication after peruser config..."
         fi
         sleep 2
       done
