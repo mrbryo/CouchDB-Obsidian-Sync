@@ -47,6 +47,7 @@ if [ -f /config/local.ini ] ; then
   sed -i "s|{COUCHDB_USER}|${COUCHDB_USER:-admin}|g" /opt/couchdb/etc/local.d/a_local.ini
   sed -i "s|{COUCHDB_PASSWORD}|${COUCHDB_PASSWORD:-MustSetPassword!}|g" /opt/couchdb/etc/local.d/a_local.ini
   sed -i "s|{COUCHDB_DATA_DIR}|${COUCHDB_DATA_DIR:-/mnt/user/appdata/ObsidianSync/data}|g" /opt/couchdb/etc/local.d/a_local.ini
+  sed -i "s|{COUCHDB_SECRET}|${COUCHDB_SECRET:-$(openssl rand -hex 16)}|g" /opt/couchdb/etc/local.d/a_local.ini
 else
   log "Important Note: /config/local.ini is missing. See the README.md for all the details."
 fi

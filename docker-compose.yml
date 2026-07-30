@@ -3,14 +3,15 @@ services:
     build: .
     container_name: couchdb-obsidian-sync
     environment:
-      - COUCHDB_USER=${COUCHDB_USER:-admin}
-      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-password}
+      - COUCHDB_USER=${COUCHDB_USER:-admin_user}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin_password}
+      - COUCHDB_SECRET=${COUCHDB_SECRET:-SOMESUPERCOOLSECRETCODE?}
+      - COUCHDB_DATA_DIR=${COUCHDB_DATA_DIR:-/opt/couchdb/data}
+      - COUCHDB_LOG_LEVEL=${COUCHDB_LOG_LEVEL:-info}
     volumes:
       - /mnt/user/appdata/ObsidianSync/data:/opt/couchdb/data
       - /mnt/user/appdata/ObsidianSync/config:/opt/couchdb/etc/local.d
       - ./config:/config
-      - /mnt/user/appdata/ObsidianSync/data:/var/lib/couchdb
-      - /mnt/user/appdata/ObsidianSync/config:/etc/couchdb/local.d
     ports:
       - "5984:5984"
     restart: unless-stopped
