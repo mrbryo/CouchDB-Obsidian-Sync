@@ -4,9 +4,6 @@ FROM apache/couchdb:latest
 # copy over my config
 COPY config/ /config/
 
-# make the config.sh script executable
-RUN chmod +x /config/config.sh
-
 # make the entrypoint script executable
 RUN chmod +x /docker-entrypoint-wrapper.sh
 
